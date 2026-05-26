@@ -1,6 +1,19 @@
-const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_jWnZtBxthINwZnn2NDS6wg_wour17Cc'; // Consider using RLS in Supabase for security
+// ==========================================
+// ⚠️ SECURITY WARNING ⚠️
+// 1. Ensure SUPABASE_KEY is your 'anon' (public) key, NOT a 'service_role' key.
+//    Service role keys bypass Row Level Security (RLS) and give users full admin access!
+// 2. Client-side password checking (admin123) is highly insecure. 
+//    Anyone can view the source code and bypass it. Use Supabase Auth for production.
+// ==========================================
 
+const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jWnZtBxthINwZnn2NDS6wg_wour17Cc'; // VERIFY THIS IS YOUR ANON KEY!
+
+// If using ES Modules, uncomment the following line and comment out the CDN script:
+// import { createClient } from '@supabase/supabase-js';
+// const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// If using CDN, ensure `supabase` is globally available
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const money = new Intl.NumberFormat('es-CO', {
@@ -32,13 +45,18 @@ const formProducto = document.getElementById("formProducto");
 const adminLista = document.getElementById("adminLista");
 const btnTop = document.getElementById("btnTop");
 
+// Added previously missing DOM elements to prevent Null Reference Errors
+const nombreCliente = document.getElementById("nombreCliente");
+const telefonoCliente = document.getElementById("telefonoCliente");
+const observacionesCliente = document.getElementById("observacionesCliente");
+
 // Event Listeners
 btnCarrito.addEventListener("click", toggleCarrito);
 overlay.addEventListener("click", toggleCarrito); // Close cart when clicking overlay
 btnAdmin.addEventListener("click", toggleAdmin);
 busqueda.addEventListener("input", filtrarProductos);
 filtroCategoria.addEventListener("change", filtrarProductos);
-formProducto.addEventListener("submit", agregarProductoAdmin);
+formProducto.addEventListener("submit", agregarProductoDB); // Changed to match the actual function name
 window.addEventListener('scroll', () => {
     btnTop.style.display = window.scrollY > 300 ? "block" : "none";
 });
@@ -150,6 +168,8 @@ function actualizarCarrito() {
         `;
     }).join('');
 
+    // Note: IVA is hardcoded at 0.19 (19%). If tax rates vary by product, 
+    // you should add an 'iva_rate' column to your database instead.
     const iva = subtotal * 0.19;
     const total = subtotal + iva;
 
@@ -194,31 +214,36 @@ function toggleCarrito() {
 function enviarWhatsApp() {
     if (!carrito.length) return toast("Carrito vacío");
     
-    const nombre = document.getElementById("nombreCliente").value.trim();
-    const telefono = document.getElementById("telefonoCliente").value.trim();
-    const obs = document.getElementById("observacionesCliente").value.trim();
+    // Safe checking for DOM elements in case they are missing
+    const nombre = nombreCliente ? nombreCliente.value.trim() : "";
+    const telefono = telefonoCliente ? telefonoCliente.value.trim() : "";
+    const obs = observacionesCliente ? observacionesCliente.value.trim() : "";
 
     if (!nombre) return toast("Por favor, ingrese su nombre");
 
-    let msg = `*PEDIDO*%0A`;
-    msg += `Cliente: ${nombre}%0A`;
-    msg += `Teléfono: ${telefono}%0A`;
-    msg += `Observaciones: ${obs}%0A%0A`;
+    let msg = `*PEDIDO*\n`;
+    msg += `Cliente: ${nombre}\n`;
+    msg += `Teléfono: ${telefono}\n`;
+    msg += `Observaciones: ${obs}\n\n`;
 
     carrito.forEach(p => {
-        msg += `• ${p.nombre} (${p.categoria || 'General'}) x${p.cantidad} = ${money.format(p.precio * p.cantidad)}%0A`;
+        msg += `• ${p.nombre} (${p.categoria || 'General'}) x${p.cantidad} = ${money.format(p.precio * p.cantidad)}\n`;
     });
 
-    msg += `%0ATOTAL: ${totalEl.textContent}`;
-    window.open(`https://wa.me/573192654225?text=${msg}`);
+    msg += `\nTOTAL: ${totalEl.textContent}`;
+    
+    // Encode the entire URI component to prevent special characters/line breaks from breaking the link
+    const encodedMsg = encodeURIComponent(msg);
+    window.open(`https://wa.me/573192654225?text=${encodedMsg}`);
 }
 
 // --- ADMIN LOGIC ---
 function toggleAdmin() {
     const isActive = adminModal.classList.toggle("active");
     if (isActive) {
+        // WARNING: Client-side password check is insecure. Replace with Supabase Auth in production.
         const pass = prompt("Ingrese contraseña de administrador:");
-        if (pass !== "admin123") { // Simple auth layer
+        if (pass !== "admin123") { 
             toast("Contraseña incorrecta");
             adminModal.classList.remove("active");
             return;
@@ -284,4 +309,3 @@ function toast(msg) {
     toastDiv.classList.add("show");
     setTimeout(() => { toastDiv.classList.remove("show"); }, 2000);
 }
-
