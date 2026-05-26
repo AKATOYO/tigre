@@ -1,1 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catálogo Profesional</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Fixed Header -->
+    <header class="header-fijo">
+        <div class="header-top">
+            <input id="busqueda" placeholder="Buscar producto..." aria-label="Buscar producto">
+            <div class="header-actions">
+                <button id="btnAdmin" aria-label="Panel de Administrador" title="Admin">🔒</button>
+                <button id="btnCarrito" aria-label="Abrir carrito">🛒 <span id="contador">0</span></button>
+            </div>
+        </div>
+        <select id="filtroCategoria" aria-label="Filtrar por categoría">
+            <option value="">Todas las categorías</option>
+        </select>
+    </header>
+
+    <main>
+        <h1>Catálogo</h1>
+        <div id="productos" class="grid"></div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div id="overlay" class="overlay"></div>
+    <aside id="carrito" class="carrito">
+        <div class="carrito-header">
+            <h2 id="numCot"></h2>
+            <button class="close-carrito" onclick="toggleCarrito()">&times;</button>
+        </div>
+        <div class="cliente">
+            <input id="nombreCliente" placeholder="Nombre" aria-label="Nombre del cliente">
+            <input id="telefonoCliente" placeholder="Teléfono" aria-label="Teléfono del cliente">
+            <textarea id="observacionesCliente" placeholder="Dirección / observaciones" aria-label="Observaciones"></textarea>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cant.</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="detalle-carrito"></tbody>
+        </table>
+        <div class="totales">
+            <p>Subtotal: <span id="subtotal">$0</span></p>
+            <p>IVA (19%): <span id="iva">$0</span></p>
+            <h3>Total: <span id="total">$0</span></h3>
+        </div>
+        <div class="botones">
+            <button class="btn-success" onclick="enviarWhatsApp()">Enviar WhatsApp</button>
+            <button onclick="window.print()">Imprimir PDF</button>
+            <button class="btn-danger" onclick="vaciarCarrito()">Vaciar</button>
+        </div>
+    </aside>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Panel de Administrador</h2>
+                <button class="close-modal" onclick="toggleAdmin()">&times;</button>
+            </div>
+            <form id="formProducto">
+                <input type="text" id="adminNombre" placeholder="Nombre del producto" required>
+                <input type="text" id="adminCategoria" placeholder="Categoría (ej: Electrónica)" required>
+                <textarea id="adminDesc" placeholder="Descripción"></textarea>
+                <input type="number" id="adminPrecio" placeholder="Precio" required min="0">
+                <input type="url" id="adminImagen" placeholder="URL de la imagen (opcional)">
+                <button type="submit" class="btn-success">Agregar Producto</button>
+            </form>
+            <h3>Productos Actuales</h3>
+            <div id="adminLista" class="admin-list"></div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button id="btnTop" title="Volver arriba">↑</button>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
 
