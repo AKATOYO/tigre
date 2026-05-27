@@ -41,6 +41,7 @@ body {
 }
 
 #busqueda {
+    width: 60%;
     flex: 1;
     padding: 12px 18px;
     border: 2px solid var(--primary);
