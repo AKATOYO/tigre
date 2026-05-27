@@ -7,7 +7,7 @@
 // ==========================================
 
 const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_jWnZtBxthINwZnn2NDS6wg_wour17Cc'; // VERIFY THIS IS YOUR ANON KEY!
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsaW9ocHJ6cXh6cHl5cnB2bHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTIyNTcsImV4cCI6MjA5MTc2ODI1N30.vvWoWAnHbfmZMEDWTKV8aGs6OsTKjpMam1h2OXVCjQI'; // VERIFY THIS IS YOUR ANON KEY!
 
 // If using ES Modules, uncomment the following line and comment out the CDN script:
 // import { createClient } from '@supabase/supabase-js';
