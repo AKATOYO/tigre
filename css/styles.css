@@ -52,7 +52,7 @@ body {
 #busqueda:focus { box-shadow: 0 0 5px rgba(19, 101, 232, 0.3); }
 
 #filtroCategoria {
-    width: 100%;
+    width: 30%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 30px;
