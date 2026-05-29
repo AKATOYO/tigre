@@ -3,7 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Catálogo Profesional</title>
+    <title>Catálogo de cotizaciones</title>
+
+    <!-- META TAGS POR DEFECTO (Para la página principal sin producto) -->
+    <meta property="og:title" content="Catálogo Profesional">
+    <meta property="og:description" content="Encuentra los mejores productos del mercado.">
+    <meta property="og:image" content=""> <!-- Recomendado: URL absoluta a una imagen genérica del catálogo -->
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="fb:app_id" content=""> <!-- Opcional: ID de tu app de Facebook -->
+
+    <!-- INYECCIÓN SINCRÓNICA PARA CRAWLERS (WHATSAPP / FACEBOOK) -->
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('producto');
+            if (!productId) return;
+
+            const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsaW9ocHJ6cXh6cHl5cnB2bHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTIyNTcsImV4cCI6MjA5MTc2ODI1N30.vvWoWAnHbfmZMEDWTKV8aGs6OsTKjpMam1h2OXVCjQI';
+            
+            try {
+                const req = new XMLHttpRequest();
+                req.open('GET', `${SUPABASE_URL}/rest/v1/productos?id=eq.${productId}&select=nombre,descripcion,precio,imagen_url`, false);
+                req.setRequestHeader('apikey', SUPABASE_KEY);
+                req.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
+                req.send(null);
+
+                if (req.status === 200) {
+                    const data = JSON.parse(req.responseText);
+                    if (data.length > 0) {
+                        const p = data[0];
+                        const priceStr = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(p.precio || 0);
+                        
+                        document.title = `${p.nombre} - Catálogo`;
+                        
+                        const updateMeta = (property, content) => {
+                            let meta = document.querySelector(`meta[property="${property}"]`);
+                            if (!meta) { meta = document.createElement('meta'); meta.setAttribute('property', property); document.head.appendChild(meta); }
+                            meta.setAttribute('content', content);
+                        };
+
+                        updateMeta('og:title', p.nombre);
+                        updateMeta('og:description', `${p.descripcion || 'Producto disponible'} - ${priceStr}`);
+                        updateMeta('og:image', p.imagen_url || '');
+                        updateMeta('og:url', window.location.href);
+                        updateMeta('og:type', 'product.item');
+                        updateMeta('product:price:amount', p.precio);
+                        updateMeta('product:price:currency', 'COP');
+                    }
+                }
+            } catch (e) { console.error("OG Sync Error:", e); }
+        })();
+    </script>
+
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -11,39 +66,43 @@
     <!-- Fixed Header -->
     <header class="header-fijo">
         <div class="header-top">
-            <input id="busqueda" placeholder="Buscar producto..." aria-label="Buscar producto">
+            <input id="busqueda" placeholder="Buscar producto..." aria-label="Buscar producto" autocomplete="off">
             <div class="header-actions">
-                <button id="btnAdmin" aria-label="Panel de Administrador" title="Admin">🔒</button>
-                <button id="btnCarrito" aria-label="Abrir carrito">🛒 <span id="contador">0</span></button>
-
-                       <select id="filtroCategoria" aria-label="Filtrar por categoría">
-                          <option value="">Todas las categorías</option>
-                      </select>
-                
+                <button id="btnAdmin" aria-label="Panel de Administrador" title="Admin">
+                    <span class="btn-icon" aria-hidden="true">🔒</span>
+                    <span class="sr-only">Admin</span>
+                </button>
+                <button id="btnCarrito" aria-label="Abrir carrito">
+                    <span class="btn-icon" aria-hidden="true">🛒</span>
+                    <span id="contador" aria-live="polite">0</span>
+                    <span class="sr-only">Carrito</span>
+                </button>
+                <select id="filtroCategoria" aria-label="Filtrar por categoría">
+                    <option value="">Todas las categorías</option>
+                </select>
             </div>
         </div>
-
     </header>
 
     <main>
-        <h1>Catálogo</h1>
+        <h1>Catálogo de cotizaciones</h1>
         <div id="productos" class="grid"></div>
     </main>
 
     <!-- Cart Sidebar -->
-    <div id="overlay" class="overlay"></div>
-    <aside id="carrito" class="carrito">
+    <div id="overlay" class="overlay" aria-hidden="true"></div>
+    <aside id="carrito" class="carrito" aria-label="Carrito de compras" aria-hidden="true">
         <div class="carrito-header">
             <h2 id="numCot"></h2>
-            <button class="close-carrito" onclick="toggleCarrito()">&times;</button>
+            <button class="close-carrito" id="btnCloseCart" aria-label="Cerrar carrito">&times;</button>
         </div>
         <div class="cliente">
             <input id="nombreCliente" placeholder="Nombre" aria-label="Nombre del cliente">
-            <input id="telefonoCliente" placeholder="Teléfono" aria-label="Teléfono del cliente">
+            <input id="telefonoCliente" placeholder="Teléfono" aria-label="Teléfono del cliente" type="tel">
             <textarea id="observacionesCliente" placeholder="Dirección / observaciones" aria-label="Observaciones"></textarea>
         </div>
         <div class="nota">
-         <h3><p>Los precios están sujetos a cambios según disponibilidad e importación.</p></h3>
+            <p>Los precios están sujetos a cambios según disponibilidad e importación.</p>
         </div>
         <table>
             <thead>
@@ -51,7 +110,7 @@
                     <th>Producto</th>
                     <th>Cant.</th>
                     <th>Total</th>
-                    <th></th>
+                    <th><span class="sr-only">Acciones</span></th>
                 </tr>
             </thead>
             <tbody id="detalle-carrito"></tbody>
@@ -62,40 +121,50 @@
             <h3>Total: <span id="total">$0</span></h3>
         </div>
         <div class="botones">
-            <button class="btn-success" onclick="enviarWhatsApp()">Enviar WhatsApp</button>
-            <button onclick="window.print()">Imprimir PDF</button>
-            <button class="btn-danger" onclick="vaciarCarrito()">Vaciar</button>
+            <button class="btn-success" id="btnWhatsApp">Enviar WhatsApp</button>
+            <button id="btnPrint">Imprimir PDF</button>
+            <button class="btn-danger" id="btnVaciar">Vaciar</button>
         </div>
     </aside>
 
     <!-- Admin Panel Modal -->
-    <div id="adminModal" class="modal">
+    <div id="adminModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Panel de Administrador</h2>
-                <button class="close-modal" onclick="toggleAdmin()">&times;</button>
+                <h2 id="adminTitle">Panel de Administrador</h2>
+                <button class="close-modal" id="btnCloseAdmin" aria-label="Cerrar panel">&times;</button>
             </div>
-            <form id="formProducto">
-                <input type="text" id="adminNombre" placeholder="Nombre del producto" required>
-                <input type="text" id="adminCategoria" placeholder="Categoría (ej: Electrónica)" required>
-                <textarea id="adminDesc" placeholder="Descripción"></textarea>
-                <input type="number" id="adminPrecio" placeholder="Precio" required min="0">
-                <input type="url" id="adminImagen" placeholder="URL de la imagen (opcional)">
-                <button type="submit" class="btn-success">Agregar Producto</button>
-            </form>
-            <h3>Productos Actuales</h3>
-            <div id="adminLista" class="admin-list"></div>
+            <div id="authContainer">
+                <form id="formLogin" novalidate>
+                    <h3>Iniciar Sesión</h3>
+                    <input type="email" id="authEmail" placeholder="Correo electrónico" required>
+                    <input type="password" id="authPassword" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-success">Ingresar</button>
+                </form>
+            </div>
+            <div id="adminContainer" style="display: none;">
+                <div class="admin-welcome">
+                    <span id="adminEmail"></span>
+                    <button class="btn-danger" id="btnLogout">Cerrar Sesión</button>
+                </div>
+                <form id="formProducto" novalidate>
+                    <input type="text" id="adminNombre" placeholder="Nombre del producto" required>
+                    <input type="text" id="adminCategoria" placeholder="Categoría (ej: Electrónica)" required>
+                    <textarea id="adminDesc" placeholder="Descripción"></textarea>
+                    <input type="number" id="adminPrecio" placeholder="Precio" required min="0" step="0.01">
+                    <input type="url" id="adminImagen" placeholder="URL de la imagen (opcional)">
+                    <button type="submit" class="btn-success">Agregar Producto</button>
+                </form>
+                <h3>Productos Actuales</h3>
+                <div id="adminLista" class="admin-list"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Back to Top Button -->
-    <button id="btnTop" title="Volver arriba">↑</button>
-
-    <!-- Toast Notifications -->
-    <div id="toast" class="toast"></div>
+    <button id="btnTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
-
