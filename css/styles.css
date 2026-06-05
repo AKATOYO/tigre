@@ -143,6 +143,7 @@ button:hover { opacity: 0.8; }
 .btn-success { width: 150px; height: auto; }
 #btnPrint { width: 150px; height: auto; background: #607D8B; }
 .btn-danger { width: 150px; height: auto; }
+.btn-eliminate { width: 40px; height: auto; }  eliminate
 
 .totales { text-align: right; margin-top: 20px; }
 
