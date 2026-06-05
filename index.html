@@ -13,49 +13,56 @@
     <meta property="og:type" content="website">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="fb:app_id" content=""> <!-- Opcional: ID de tu app de Facebook -->
+    <meta property="fb:app_id" content=""> 
 
-    <!-- INYECCIÓN SINCRÓNICA PARA CRAWLERS (WHATSAPP / FACEBOOK) -->
+    <!-- INYECCIÓN DINÁMICA DE META TAGS -->
+    <!-- NOTE: WhatsApp/Facebook crawlers DO NOT run JavaScript. This script only updates the browser tab title and meta tags for the user, but it WILL NOT work for social media previews unless rendered server-side. -->
     <script>
         (function() {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('producto');
             if (!productId) return;
 
-            const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
-            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsaW9ocHJ6cXh6cHl5cnB2bHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTIyNTcsImV4cCI6MjA5MTc2ODI1N30.vvWoWAnHbfmZMEDWTKV8aGs6OsTKjpMam1h2OXVCjQI';
-            
-            try {
-                const req = new XMLHttpRequest();
-                req.open('GET', `${SUPABASE_URL}/rest/v1/productos?id=eq.${productId}&select=nombre,descripcion,precio,imagen_url`, false);
-                req.setRequestHeader('apikey', SUPABASE_KEY);
-                req.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
-                req.send(null);
+            const SUPABASE_URL = 'https://ylioh';
+            // WARNING: Ensure this is your public 'anon' key and RLS is enabled! Never expose the 'service_role' key.
+            const SUPABASE_KEY = 'YOUR_PUBLIC_ANON_KEY'; 
 
-                if (req.status === 200) {
-                    const data = JSON.parse(req.responseText);
-                    if (data.length > 0) {
-                        const p = data[0];
-                        const priceStr = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(p.precio || 0);
-                        
-                        document.title = `${p.nombre} - Catálogo`;
-                        
-                        const updateMeta = (property, content) => {
-                            let meta = document.querySelector(`meta[property="${property}"]`);
-                            if (!meta) { meta = document.createElement('meta'); meta.setAttribute('property', property); document.head.appendChild(meta); }
-                            meta.setAttribute('content', content);
-                        };
-
-                        updateMeta('og:title', p.nombre);
-                        updateMeta('og:description', `${p.descripcion || 'Producto disponible'} - ${priceStr}`);
-                        updateMeta('og:image', p.imagen_url || '');
-                        updateMeta('og:url', window.location.href);
-                        updateMeta('og:type', 'product.item');
-                        updateMeta('product:price:amount', p.precio);
-                        updateMeta('product:price:currency', 'COP');
-                    }
+            // Use Fetch API instead of synchronous XMLHttpRequest for better performance and standards compliance
+            fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${productId}&select=nombre,descripcion,precio,imagen_url`, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
                 }
-            } catch (e) { console.error("OG Sync Error:", e); }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const p = data[0];
+                    const priceStr = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(p.precio || 0);
+                    
+                    document.title = `${p.nombre} - Catálogo`;
+                    
+                    const updateMeta = (property, content) => {
+                        let meta = document.querySelector(`meta[property="${property}"]`);
+                        if (!meta) { 
+                            meta = document.createElement('meta'); 
+                            meta.setAttribute('property', property); 
+                            document.head.appendChild(meta); 
+                        }
+                        meta.setAttribute('content', content);
+                    };
+
+                    updateMeta('og:title', p.nombre);
+                    updateMeta('og:description', `${p.descripcion || 'Producto disponible'} - ${priceStr}`);
+                    updateMeta('og:image', p.imagen_url || '');
+                    updateMeta('og:url', window.location.href);
+                    updateMeta('og:type', 'product.item');
+                    updateMeta('product:price:amount', p.precio);
+                    updateMeta('product:price:currency', 'COP');
+                }
+            })
+            .catch(e => console.error("OG Fetch Error:", e));
         })();
     </script>
 
@@ -69,8 +76,8 @@
             <input id="busqueda" placeholder="Buscar producto..." aria-label="Buscar producto" autocomplete="off">
             <div class="header-actions">
                 <button id="btnAdmin" aria-label="Panel de Administrador" title="Admin">
-                    <span class="btn-icon" aria-hidden="true">🔒</span>
-                    <span class="sr-only">Admin</span>
+                    <span class="btn-icon" aria-hidden="true">⚙️</span> <!-- Changed from lock to gear for better UX -->
+                    <span class="btn-text">Admin</span>
                 </button>
                 <button id="btnCarrito" aria-label="Abrir carrito">
                     <span class="btn-icon" aria-hidden="true">🛒</span>
@@ -96,14 +103,26 @@
             <h2 id="numCot"></h2>
             <button class="close-carrito" id="btnCloseCart" aria-label="Cerrar carrito">&times;</button>
         </div>
+
+        <div class="empresa-cotizacion">
+            <h3>www.akatoyo.com</h3>
+            <p></p>
+            <p><strong>WhatsApp:</strong> +57 XXX XXX XXXX</p>
+            <p><strong>Email:</strong> ventas@akatoyo.com</p>
+            <p><strong>Ciudad:</strong> Bogotá - Colombia</p>
+            <hr>
+        </div>
+        
         <div class="cliente">
             <input id="nombreCliente" placeholder="Nombre" aria-label="Nombre del cliente">
             <input id="telefonoCliente" placeholder="Teléfono" aria-label="Teléfono del cliente" type="tel">
             <textarea id="observacionesCliente" placeholder="Dirección / observaciones" aria-label="Observaciones"></textarea>
         </div>
+
         <div class="nota">
             <p>Los precios están sujetos a cambios según disponibilidad e importación.</p>
         </div>
+
         <table>
             <thead>
                 <tr>
@@ -115,11 +134,13 @@
             </thead>
             <tbody id="detalle-carrito"></tbody>
         </table>
+
         <div class="totales">
             <p>Subtotal: <span id="subtotal">$0</span></p>
             <p>IVA (19%): <span id="iva">$0</span></p>
             <h3>Total: <span id="total">$0</span></h3>
         </div>
+
         <div class="botones">
             <button class="btn-success" id="btnWhatsApp">Enviar WhatsApp</button>
             <button id="btnPrint">Imprimir PDF</button>
@@ -164,6 +185,16 @@
     <button id="btnTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+    <!-- Footer moved inside the body tag for proper HTML5 semantics -->
+    <footer class="footer">
+        <h3>www.akatoyo.com</h3>
+        <p></p>
+        <p>📱 WhatsApp: +57 XXX XXX XXXX</p>
+        <p>📧 ventas@akatoyo.com</p>
+        <p>© 2026 AKATOYO Online</p>
+    </footer>
+
+    <!-- External Scripts loaded at the end of body for faster page load -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/app.js"></script>
 </body>
