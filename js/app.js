@@ -1,10 +1,11 @@
 // ==========================================
 // ⚠️ SECURITY WARNING ⚠️
 // NEVER expose Supabase keys in public source code in production. Use environment variables or a backend proxy.
+// Ensure strict Row Level Security (RLS) is enabled on your Supabase tables.
 // ==========================================
 
 const SUPABASE_URL = 'https://yliohprzqxzpyyrpvlvh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsaW9ocHJ6cXh6cHl5cnB2bHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTIyNTcsImV4cCI6MjA5MTc2ODI1N30.vvWoWAnHbfmZMEDWTKV8aGs6OsTKjpMam1h2OXVCjQI';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsaW9ocHJ6cXh6cHl5cnB2bHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTIyNTcsImV4cCI6MjA5MTc2ODI1N30.vvWoWAnHbfmZMEDWTKV8aGs6OsTKjpMam1h2OXVCjQI'; // Replace with your actual anon key, but be aware of the risks.
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const moneyFormatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
@@ -12,7 +13,8 @@ const moneyFormatter = new Intl.NumberFormat('es-CO', { style: 'currency', curre
 // --- STATE MANAGEMENT ---
 const State = {
     productos: [],
-    carrito: JSON.parse(localStorage.getItem("carrito")) || [],
+    // Validate cart data from localStorage to prevent corruption
+    carrito: JSON.parse(localStorage.getItem("carrito") || "[]").filter(item => item && item.id && item.precio && item.cantidad) || [],
     isAdmin: false
 };
 
@@ -148,7 +150,6 @@ const Share = {
         const p = State.productos.find(x => x.id === productId);
         if (!p) return;
         const url = Share.getUrl(p);
-        // Facebook will scrape the URL. The synchronous script in HTML head will serve the OG tags!
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     },
     toggleDropdown: (productId) => {
@@ -189,7 +190,11 @@ const Cart = {
         DOM.total.textContent = moneyFormatter.format(total);
         DOM.contador.textContent = State.carrito.reduce((a, b) => a + b.cantidad, 0);
     },
-    changeQty: (i, n) => { State.carrito[i].cantidad += n; if (State.carrito[i].cantidad <= 0) State.carrito.splice(i, 1); Cart.save(); },
+    changeQty: (i, n) => { 
+        State.carrito[i].cantidad += n; 
+        if (State.carrito[i].cantidad <= 0) State.carrito.splice(i, 1); 
+        Cart.save(); 
+    },
     remove: (i) => { State.carrito.splice(i, 1); Cart.save(); },
     empty: () => { if(confirm("¿Estás seguro de vaciar el carrito?")) { State.carrito = []; Cart.save(); } },
     save: () => { localStorage.setItem("carrito", JSON.stringify(State.carrito)); Cart.update(); },
@@ -239,7 +244,7 @@ const Admin = {
     }
 };
 
-// --- GLOBAL EVENT DELEGATION (Professional Pattern) ---
+// --- GLOBAL EVENT DELEGATION ---
 function initEventListeners() {
     // Header & Modals
     $("btnCarrito").addEventListener("click", () => Cart.toggle());
@@ -259,25 +264,38 @@ function initEventListeners() {
     DOM.formProducto.addEventListener("submit", Admin.addProduct);
 
     // Delegated Events for Dynamic Content (Products Grid)
+    // FIX: Removed parseInt() because Supabase IDs are typically UUIDs (strings). parseInt() breaks UUIDs.
     DOM.productos.addEventListener("click", (e) => {
         const target = e.target;
-        if (target.closest(".btn-add-cart")) return Cart.add(parseInt(target.closest(".btn-add-cart").dataset.id, 10));
-        if (target.closest(".btn-share")) return Share.toggleDropdown(parseInt(target.closest(".btn-share").dataset.id, 10));
-        if (target.closest(".share-wa")) { e.preventDefault(); return Share.whatsapp(parseInt(target.closest(".share-wa").dataset.id, 10)); }
-        if (target.closest(".share-fb")) { e.preventDefault(); return Share.facebook(parseInt(target.closest(".share-fb").dataset.id, 10)); }
+        const addBtn = target.closest(".btn-add-cart");
+        const shareBtn = target.closest(".btn-share");
+        const shareWa = target.closest(".share-wa");
+        const shareFb = target.closest(".share-fb");
+
+        if (addBtn) return Cart.add(addBtn.dataset.id);
+        if (shareBtn) return Share.toggleDropdown(shareBtn.dataset.id);
+        if (shareWa) { e.preventDefault(); return Share.whatsapp(shareWa.dataset.id); }
+        if (shareFb) { e.preventDefault(); return Share.facebook(shareFb.dataset.id); }
     });
 
     // Delegated Events for Cart Table
     DOM.detalleCarrito.addEventListener("click", (e) => {
         const target = e.target;
-        if (target.classList.contains("btn-cantidad")) Cart.changeQty(parseInt(target.dataset.index, 10), parseInt(target.dataset.change, 10));
-        if (target.classList.contains("btn-eliminar")) Cart.remove(parseInt(target.dataset.index, 10));
+        if (target.classList.contains("btn-cantidad")) {
+            const index = parseInt(target.dataset.index, 10);
+            const change = parseInt(target.dataset.change, 10);
+            if (!isNaN(index) && !isNaN(change)) Cart.changeQty(index, change);
+        }
+        if (target.classList.contains("btn-eliminar")) {
+            const index = parseInt(target.dataset.index, 10);
+            if (!isNaN(index)) Cart.remove(index);
+        }
     });
 
     // Delegated Events for Admin List
     DOM.adminLista.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-admin-eliminar");
-        if (btn) Admin.deleteProduct(parseInt(btn.dataset.id, 10));
+        if (btn) Admin.deleteProduct(btn.dataset.id); // FIX: Removed parseInt() for UUID support
     });
 
     // Close Share Dropdowns on outside click
