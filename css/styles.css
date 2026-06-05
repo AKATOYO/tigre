@@ -123,6 +123,8 @@ h1 { text-align: center; color: var(--primary); margin: 20px 0; }
 .carrito-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .close-carrito { background: none; color: var(--text); font-size: 30px; padding: 0; line-height: 1; }
 
+.empresa-cotizacion{ background:#f5f5f5; padding:12px; margin-bottom:10px; border-radius:8px; }
+
 .cliente input, .cliente textarea {
     width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;
 }
@@ -173,6 +175,8 @@ button:hover { opacity: 0.8; }
     transition: .3s; z-index: 4000; pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.footer{ background:#222; color:white; text-align:center; padding:20px; margin-top:40px; }
 
 #btnTop {
     position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white;
