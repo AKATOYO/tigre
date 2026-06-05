@@ -244,14 +244,49 @@ function updateMetaTags(product) {
 }
 
 // 4. Share to WhatsApp
+// 4. Compartir por WhatsApp
 function shareWhatsApp(productId) {
-    const p = productos.find(x => x.id === productId);
-    if (!p) return;
-    
-    const productUrl = updateMetaTags(p);
-    const text = `¡Mira este producto!\n\n*${p.nombre}*\n${p.descripcion || ''}\n*Precio:* ${money.format(p.precio)}\n\nVer más: ${productUrl}`;
-    
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    const p = productos.find(x => String(x.id) === String(productId));
+
+    if (!p) {
+        console.error("Producto no encontrado:", productId);
+        return;
+    }
+
+    const baseUrl = window.location.origin + window.location.pathname;
+    const productUrl = `${baseUrl}?producto=${p.id}`;
+
+    const texto =
+`🛍️ ${p.nombre}
+
+${p.descripcion || ''}
+
+💰 Precio: ${money.format(p.precio || 0)}
+
+🔗 ${productUrl}`;
+
+    window.open(
+        `https://wa.me/?text=${encodeURIComponent(texto)}`,
+        '_blank'
+    );
+}
+
+// 5. Compartir en Facebook
+function shareFacebook(productId) {
+    const p = productos.find(x => String(x.id) === String(productId));
+
+    if (!p) {
+        console.error("Producto no encontrado:", productId);
+        return;
+    }
+
+    const baseUrl = window.location.origin + window.location.pathname;
+    const productUrl = `${baseUrl}?producto=${p.id}`;
+
+    window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`,
+        '_blank'
+    );
 }
 
 // 5. Share to Facebook
