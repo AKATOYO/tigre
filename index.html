@@ -15,56 +15,12 @@
     <meta property="og:image:height" content="630">
     <meta property="fb:app_id" content=""> 
 
-    <!-- INYECCIÓN DINÁMICA DE META TAGS -->
-    <!-- NOTE: WhatsApp/Facebook crawlers DO NOT run JavaScript. This script only updates the browser tab title and meta tags for the user, but it WILL NOT work for social media previews unless rendered server-side. -->
-    <script>
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const productId = params.get('producto');
-            if (!productId) return;
-
-            const SUPABASE_URL = 'https://ylioh';
-            // WARNING: Ensure this is your public 'anon' key and RLS is enabled! Never expose the 'service_role' key.
-            const SUPABASE_KEY = 'YOUR_PUBLIC_ANON_KEY'; 
-
-            // Use Fetch API instead of synchronous XMLHttpRequest for better performance and standards compliance
-            fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${productId}&select=nombre,descripcion,precio,imagen_url`, {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.length > 0) {
-                    const p = data[0];
-                    const priceStr = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(p.precio || 0);
-                    
-                    document.title = `${p.nombre} - Catálogo`;
-                    
-                    const updateMeta = (property, content) => {
-                        let meta = document.querySelector(`meta[property="${property}"]`);
-                        if (!meta) { 
-                            meta = document.createElement('meta'); 
-                            meta.setAttribute('property', property); 
-                            document.head.appendChild(meta); 
-                        }
-                        meta.setAttribute('content', content);
-                    };
-
-                    updateMeta('og:title', p.nombre);
-                    updateMeta('og:description', `${p.descripcion || 'Producto disponible'} - ${priceStr}`);
-                    updateMeta('og:image', p.imagen_url || '');
-                    updateMeta('og:url', window.location.href);
-                    updateMeta('og:type', 'product.item');
-                    updateMeta('product:price:amount', p.precio);
-                    updateMeta('product:price:currency', 'COP');
-                }
-            })
-            .catch(e => console.error("OG Fetch Error:", e));
-        })();
-    </script>
+    <!-- 
+        NOTE: WhatsApp/Facebook crawlers DO NOT run JavaScript. 
+        Client-side JS cannot update OG tags for social media previews.
+        To generate dynamic OG tags, you MUST use Server-Side Rendering (SSR) 
+        or a backend proxy/cloud function that injects the meta tags before responding to the crawler.
+    -->
 
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -76,7 +32,7 @@
             <input id="busqueda" placeholder="Buscar producto..." aria-label="Buscar producto" autocomplete="off">
             <div class="header-actions">
                 <button id="btnAdmin" aria-label="Panel de Administrador" title="Admin">
-                    <span class="btn-icon" aria-hidden="true">⚙️</span> <!-- Changed from lock to gear for better UX -->
+                    <span class="btn-icon" aria-hidden="true">⚙️</span>
                     <span class="btn-text">Admin</span>
                 </button>
                 <button id="btnCarrito" aria-label="Abrir carrito">
@@ -185,7 +141,6 @@
     <button id="btnTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <!-- Footer moved inside the body tag for proper HTML5 semantics -->
     <footer class="footer">
         <h3>www.akatoyo.com</h3>
         <p></p>
@@ -194,7 +149,7 @@
         <p>© 2026 AKATOYO Online</p>
     </footer>
 
-    <!-- External Scripts loaded at the end of body for faster page load -->
+    <!-- External Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/app.js"></script>
 </body>
